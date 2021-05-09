@@ -27,6 +27,13 @@ int m = 0;
 int s = 0;
 int d = 0;
 
+int alarmH = 0;
+int alarmM = 0;
+int alarmS = 0;
+int alarmD = 0;
+
+bool alarmSet = 0;
+
 // - - - CONSTANTS and IMPORTANT VALUES BLOCK - - - //
 
 // - - - - - KEYBOARD BLOCK - - - - - //
@@ -112,22 +119,75 @@ void printDay()
     	break;
   }
 }
-
 // - - - - LCD DISPLAY BLOCK - - - - //
 
+// BEGINNING OF MARIO THEME taken from the link below: //
+// https://gist.github.com/gskielian/6135641 		   //
+void playMelody()
+{
+  	tone(12,660,100);
+	delay(150);
+	tone(12,660,100);
+	delay(300);
+	tone(12,660,100);
+	delay(300);
+	tone(12,510,100);
+	delay(100);
+	tone(12,660,100);
+	delay(300);
+	tone(12,770,100);
+	delay(550);
+	tone(12,380,100);
+	delay(575); 
+}
+
+
+
 /*
-* 	setTimeNew function sets a new time for the Alarm clock
+*	ceckTime function increments the values of time and day
+*	it is repeatedly called with a delay after displaying a menu
+*	it checks if values are correct and don't go over 
+*/
+void checkTime()
+{
+  s += 1;
+  if(s == 60)
+  {
+    s = 0;
+    m += 1;
+  }
+  if(m == 60)
+  {
+    m = 0;
+    h += 1;
+  }
+  if(h == 24)
+  {
+    h = 0;
+    d += 1;
+  }
+  if(d > 7)
+  {
+    d = 1; 
+  }
+}
+
+
+/*
+* 	setTime function sets a new time for the Alarm clock
 * 	infinite loop checks if key pressed is correct and the proceeds
 *	once all numbers are written, the time is set. 
 */
-void setTime()
+void setTime( bool alarm )
 {
+  lcd.clear();
   lcd.setCursor(4, 0);
   lcd.print("SET TIME     ");
   lcd.setCursor(4, 1);
   
   int pos = 1;	//pos number shows current position on time scale
   				//12:34:56 where pos 1 and 2 are hours etc.
+  Serial.println(pos);
   int temp = 0;
   
   while(true)
@@ -138,7 +198,14 @@ void setTime()
     if( pos == 1 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2' ))
     {
       temp = keyPressed - 48;
-      h = temp * 10;		//tens of hours thus * 10
+      if( !alarm )
+      {
+      	h = temp * 10;		//tens of hours thus * 10
+      }
+      else
+      {
+        alarmH = temp * 10; 
+      }
       pos += 1;
       lcd.print(temp);
       continue;
@@ -152,11 +219,18 @@ void setTime()
       	if( h < 20 )
       	{
           	temp = keyPressed - 48;
-        	h += temp;
+          	if( ! alarm )
+            {  
+        	  h += temp;
+            }
+          	else
+            {
+              alarmH += temp; 
+            }
         	pos += 1;
           	lcd.print(temp);
             lcd.print(":");
-          	Serial.println(h);
+          	//Serial.println(h);
           	continue;
       	}
       	else if ( h == 20 )
@@ -164,11 +238,18 @@ void setTime()
         	if(keyPressed == '0' || keyPressed == '1' || keyPressed == '2' || keyPressed == '3')
         	{
           		temp = keyPressed - 48;
-        		h += temp;
+                if( !alarm )
+                {
+        		  h += temp;
+                }
+              	else
+                {
+                  alarmH += temp; 
+                }
         		pos += 1;
               	lcd.print(temp);
                 lcd.print(":");
-              	Serial.println(h);
+              	//Serial.println(h);
               	continue;
         	}
       	}
@@ -179,7 +260,14 @@ void setTime()
        			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5' ))
     {
       temp = keyPressed - 48;
-      m = temp * 10;		//tens of minutes thus * 10
+       if( !alarm )
+      {
+      	m = temp * 10;		//tens of minutes thus * 10
+      }
+      else
+      {
+        alarmM = temp * 10; 
+      }
       pos += 1;
       lcd.print(temp);
       continue;
@@ -191,7 +279,14 @@ void setTime()
                  || keyPressed == '9'))
     {
       temp = keyPressed - 48;
-      m += temp;		
+        if( !alarm )
+        {
+          m += temp;
+        }
+        else
+        {
+          alarmM += temp; 
+        }		
       pos += 1;
       lcd.print(temp);
       lcd.print(":");
@@ -204,7 +299,14 @@ void setTime()
        			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5' ))
     {
       temp = keyPressed - 48;
-      s = temp * 10;		//tens of seconds thus * 10
+      if( !alarm )
+      {
+      	s = temp * 10;		//tens of seconds thus * 10
+      }
+      else
+      {
+        alarmS = temp * 10; 
+      }
       pos += 1;
       lcd.print(temp);
       continue;
@@ -216,7 +318,14 @@ void setTime()
                  || keyPressed == '9'))
     {
       temp = keyPressed - 48;
-      s += temp;		
+        if( !alarm )
+        {
+          s += temp;
+        }
+        else
+        {
+          alarmS += temp; 
+        }		
       pos += 1;
       lcd.print(temp);
       Serial.println(s);
@@ -225,7 +334,7 @@ void setTime()
   }
 }
 
-void setDay()
+void setDay( bool alarm )
 {
   lcd.clear();
   lcd.setCursor(3, 0);
@@ -238,7 +347,14 @@ void setDay()
     if(	   keyPressed == '1' || keyPressed == '2' || keyPressed == '3' || keyPressed == '4' 
        	|| keyPressed == '5' || keyPressed == '6' || keyPressed == '7' )
     {
-      	d = keyPressed - 48 - 1;
+      	if( !alarm )
+      	{  
+      		d = keyPressed - 48;
+      	}
+      	else
+      	{
+        	alarmD = keyPressed - 48; 
+      	}
    		lcd.print(keyPressed);
         break;
     }
@@ -247,13 +363,20 @@ void setDay()
 }
 
 void setAlarm()
-{ 
+{
+  setTime(true);
+  setDay(true);
+  alarmSet = true;
 }
 
 void setTimer()
 {
 }
 
+
+
+////////////////////////////////////////////////////////////////
+//					SETUP AND LOOP BLOCK					  //
 ////////////////////////////////////////////////////////////////
 void setup()
 {
@@ -268,18 +391,19 @@ void loop()
   switch(STATE)
   {
     case SET_TIME_NEW:
-    	setTime();
+    	setTime(false);
     	NEXT_STATE = SET_DAY;
     	break;
     
     case SET_DAY:
-    	setDay();
+    	setDay(false);
     	NEXT_STATE = MENU;
     	break;
     
     case MENU:
     	displayMenu();
     	keyPressed = keyPad.getKey();
+    
     	if( keyPressed == 'A' )
         {
           NEXT_STATE = SET_TIME;
@@ -295,7 +419,8 @@ void loop()
     	break;
     
     case SET_TIME:
-    	setTime();
+    	setTime(false);
+    	NEXT_STATE = SET_DAY;
     	break;
     
     case SET_ALARM:
@@ -305,7 +430,17 @@ void loop()
     case SET_TIMER:
     	setTimer();
     	break;
+    
+    case ALARM:
+    	printAlarm();
+    	break;
   }
+  delay(1000);
+  if( alarmSet == true )
+  {
+  	checkAlarm();
+  }
+  checkTime();
   STATE = NEXT_STATE;
     
   /*
