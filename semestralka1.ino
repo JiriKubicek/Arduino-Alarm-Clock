@@ -13,7 +13,7 @@
 const int buzzer = 12;
 
 enum states {
- SET_TIME, SET_DAY, MENU_NEW, MENU_DEL  
+ SET_TIME_NEW, SET_DAY, MENU, SET_TIME, SET_ALARM, SET_TIMER  
 };
 enum states STATE, NEXT_STATE;
 
@@ -47,70 +47,267 @@ byte colPins[numCols] = {5, 4, 3, 2};
 
 Keypad keyPad = Keypad( makeKeymap(keys), rowPins, colPins, numRows, numCols); 
 
+char keyPressed;
+
 // - - - - - KEYBOARD BLOCK - - - - - // 
 
 // - - - - LCD DISPLAY BLOCK - - - - //
-LiquidCrystal LCD(RS, E, D4, D5, D6, D7);  
+LiquidCrystal lcd(RS, E, D4, D5, D6, D7);  
 
 void displayMenu( )
 {
-  LCD.setCursor(0, 0);
-  LCD.print("TIME ");
+  lcd.setCursor(0, 0);
+  lcd.print("TIME: ");
   printTime();
   
-  LCD.setCursor(0, 1);
-  LCD.print("DAY: ");
+  lcd.setCursor(0, 1);
+  lcd.print(" DAY: ");
   printDay();
+}
+
+void printTime()
+{
+  if(h < 10)
+    lcd.print("0");
+  lcd.print(h);
+  
+  lcd.print(":");
+  
+  if(m < 10)
+    lcd.print("0");
+  lcd.print(m);
+  
+  lcd.print(":");
+  
+  if(s < 10)
+    lcd.print("0");
+  lcd.print(s);
+}
+
+
+void printDay()
+{
+  switch(d)
+  {
+  	case 1:
+    	lcd.print("MONDAY   ");
+    	break;
+    case 2:
+    	lcd.print("TUESDAY  ");
+    	break;
+    case 3:
+    	lcd.print("WEDNESDAY");
+    	break;
+    case 4:
+    	lcd.print("THURSDAY ");
+    	break;
+    case 5:
+    	lcd.print("FRIDAY   ");
+    	break;
+    case 6:
+    	lcd.print("SATURDAY ");
+    	break;
+    case 7:
+    	lcd.print("SUNDAY   ");
+    	break;
+  }
 }
 
 // - - - - LCD DISPLAY BLOCK - - - - //
 
-printTime()
+/*
+* 	setTimeNew function sets a new time for the Alarm clock
+* 	infinite loop checks if key pressed is correct and the proceeds
+*	once all numbers are written, the time is set. 
+*/
+void setTime()
 {
+  lcd.setCursor(4, 0);
+  lcd.print("SET TIME     ");
+  lcd.setCursor(4, 1);
+  
+  int pos = 1;	//pos number shows current position on time scale
+  				//12:34:56 where pos 1 and 2 are hours etc.
+  int temp = 0;
+  
+  while(true)
+  {
+    temp = 0;
+    keyPressed = keyPad.getKey();
+    // SETTING OF HOURS
+    if( pos == 1 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2' ))
+    {
+      temp = keyPressed - 48;
+      h = temp * 10;		//tens of hours thus * 10
+      pos += 1;
+      lcd.print(temp);
+      continue;
+    }
+    
+    if( pos == 2 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2'
+       			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5'
+       			 || keyPressed == '6' || keyPressed == '7' || keyPressed == '8' 
+                 || keyPressed == '9'))
+    {
+      	if( h < 20 )
+      	{
+          	temp = keyPressed - 48;
+        	h += temp;
+        	pos += 1;
+          	lcd.print(temp);
+            lcd.print(":");
+          	Serial.println(h);
+          	continue;
+      	}
+      	else if ( h == 20 )
+      	{
+        	if(keyPressed == '0' || keyPressed == '1' || keyPressed == '2' || keyPressed == '3')
+        	{
+          		temp = keyPressed - 48;
+        		h += temp;
+        		pos += 1;
+              	lcd.print(temp);
+                lcd.print(":");
+              	Serial.println(h);
+              	continue;
+        	}
+      	}
+    }
+    
+    // SETTING OF MINUTES
+    if( pos == 3 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2'
+       			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5' ))
+    {
+      temp = keyPressed - 48;
+      m = temp * 10;		//tens of minutes thus * 10
+      pos += 1;
+      lcd.print(temp);
+      continue;
+    }
+    
+    if( pos == 4 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2'
+       			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5'
+       			 || keyPressed == '6' || keyPressed == '7' || keyPressed == '8' 
+                 || keyPressed == '9'))
+    {
+      temp = keyPressed - 48;
+      m += temp;		
+      pos += 1;
+      lcd.print(temp);
+      lcd.print(":");
+      Serial.println(m);
+      continue;
+    }
+    
+    // SETTING OF SECONDS
+    if( pos == 5 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2'
+       			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5' ))
+    {
+      temp = keyPressed - 48;
+      s = temp * 10;		//tens of seconds thus * 10
+      pos += 1;
+      lcd.print(temp);
+      continue;
+    }
+    
+    if( pos == 6 && (keyPressed == '0' || keyPressed == '1' || keyPressed == '2'
+       			 || keyPressed == '3' || keyPressed == '4' || keyPressed == '5'
+       			 || keyPressed == '6' || keyPressed == '7' || keyPressed == '8' 
+                 || keyPressed == '9'))
+    {
+      temp = keyPressed - 48;
+      s += temp;		
+      pos += 1;
+      lcd.print(temp);
+      Serial.println(s);
+      break;
+    }
+  }
+}
+
+void setDay()
+{
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("SET DAY 1-7");
+  lcd.setCursor(7, 1);
+  
+  while( true )
+  {
+    keyPressed = keyPad.getKey();
+    if(	   keyPressed == '1' || keyPressed == '2' || keyPressed == '3' || keyPressed == '4' 
+       	|| keyPressed == '5' || keyPressed == '6' || keyPressed == '7' )
+    {
+      	d = keyPressed - 48 - 1;
+   		lcd.print(keyPressed);
+        break;
+    }
+  }
   
 }
 
-
-printDay()
-{
-  switch(d)
-  {
-  	case 0:
-    	LCD.print("MONDAY   ");
-    	break;
-    case 1:
-    	LCD.print("TUESDAY  ");
-    	break;
-    case 2:
-    	LCD.print("WEDNESDAY");
-    	break;
-    case 3:
-    	LCD.print("THURSDAY ");
-    	break;
-    case 4:
-    	LCD.print("FRIDAY   ");
-    	break;
-    case 5:
-    	LCD.print("SATURDAY ");
-    	break;
-    case 6:
-    	LCD.print("SUNDAY   ");
-    	break;
+void setAlarm()
+{ 
 }
 
+void setTimer()
+{
+}
 
 ////////////////////////////////////////////////////////////////
 void setup()
 {
-  LCD.begin(16,2);
+  lcd.begin(16,2);
   pinMode(12, OUTPUT);		//buzzer setup
   Serial.begin(9600);
 }
 
 void loop()
 {
-  
-  
+  //displayMenu();
+  switch(STATE)
+  {
+    case SET_TIME_NEW:
+    	setTime();
+    	NEXT_STATE = SET_DAY;
+    	break;
+    
+    case SET_DAY:
+    	setDay();
+    	NEXT_STATE = MENU;
+    	break;
+    
+    case MENU:
+    	displayMenu();
+    	keyPressed = keyPad.getKey();
+    	if( keyPressed == 'A' )
+        {
+          NEXT_STATE = SET_TIME;
+        }
+    	if( keyPressed == 'B' )
+        {
+          NEXT_STATE = SET_ALARM;
+        }
+    	if( keyPressed == 'C' )
+        {
+          NEXT_STATE = SET_TIMER;
+        }
+    	break;
+    
+    case SET_TIME:
+    	setTime();
+    	break;
+    
+    case SET_ALARM:
+    	setAlarm();
+    	break;
+    
+    case SET_TIMER:
+    	setTimer();
+    	break;
+  }
+  STATE = NEXT_STATE;
+    
   /*
   char keyPressed = keyPad.getKey();
   if( keyPressed != NO_KEY )
