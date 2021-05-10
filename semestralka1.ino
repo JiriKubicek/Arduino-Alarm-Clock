@@ -13,7 +13,7 @@
 const int buzzer = 12;
 
 enum states {
- SET_TIME_NEW, SET_DAY, MENU, SET_TIME, SET_ALARM, SET_TIMER, ALARM  
+ SET_TIME_NEW, SET_DAY, MENU, SET_TIME, SET_ALARM, SET_TIMER, ALARM, TIMER  
 };
 enum states STATE, NEXT_STATE;
 
@@ -31,6 +31,10 @@ int alarmH = 0;
 int alarmM = 0;
 int alarmS = 0;
 int alarmD = 0;
+
+int timerH = 0;
+int timerM = 0;
+int timerS = 0;
 
 bool alarmSet = 0;
 
@@ -193,7 +197,7 @@ bool checkAlarm()
 }
 
 /* Alarm method plays tune and changes the display until confirmation	*/
-void Alarm()
+void alarm()
 {
   lcd.clear();
   lcd.setCursor( 2, 0 );
@@ -206,14 +210,65 @@ void Alarm()
    keyPressed = keyPad.getKey();
    if( keyPressed != NO_KEY )
    {
-    alarmSet = false;
+    if( alarmSet == true )
+    {
+    	alarmSet = false;
+    }
     break; 
    }
-   playMelody(); 
-   checkTime();
-   delay(1000);  
+   playMelody();  
   }
   
+}
+
+/* Timer method counts down to 0 and prints current countdown to LCD*/
+void timer()
+{
+  while( true )
+  {
+    lcd.setCursor(4, 1);
+  	if(timerH < 10)
+      lcd.print("0");
+  	lcd.print(timerH);
+  
+  	lcd.print(":");
+  
+  	if(timerM < 10)
+  	  lcd.print("0");
+  	lcd.print(timerM);
+  
+  	lcd.print(":");
+  
+  	if(timerS < 10)
+  	  lcd.print("0");
+  	lcd.print(timerS);
+   
+    checkTime();
+    
+  	if(timerS == 0)
+  	{
+      if( timerM != 0 )
+      {
+      	timerS = 59;
+  	  	timerM -= 1;
+      }
+  	}
+  	if(timerM == 0)
+  	{
+      if( timerH != 0 )
+      {
+  	  	timerM = 59;
+  	  	timerH -= 1;
+      }
+  	}
+  	if(timerH == 0)
+    {
+  	}
+    timerS -= 1;
+    delay(1000);
+    if(timerH == 0 && timerM == 0 && timerS == 0 )
+      break;
+  }
 }
 
 // - - - - - - - - - SET METHOD BLOCK - - - - - - - - - //
@@ -416,7 +471,77 @@ void setAlarm()
 
 void setTimer()
 {
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("SET TIMER    ");
+  lcd.setCursor(4, 1);
   
+  int pos = 1;
+  
+  while(true)
+  {
+    keyPressed = keyPad.getKey();
+    int temp = 0;
+    //SETTING TIMER HOURS
+    if(pos == 1 && keyPressed != NO_KEY &&( keyPressed != 'A' || keyPressed != 'B' || keyPressed != 'C'
+                ||   keyPressed != 'D'  || keyPressed != '#' || keyPressed != '*'))
+    {
+      temp = keyPressed - 48;
+      timerH = temp * 10;
+      pos += 1;
+      lcd.print(keyPressed);
+      continue;
+    }
+    if(pos == 2 && keyPressed != NO_KEY && ( keyPressed != 'A' || keyPressed != 'B' || keyPressed != 'C'
+                ||   keyPressed != 'D' || keyPressed != '#' || keyPressed != '*'))
+    {
+      temp = keyPressed - 48;
+      timerH += temp;
+      pos += 1;
+      lcd.print(keyPressed);
+      lcd.print(':');
+      continue;
+    }
+    //SETTING TIMER MINUTES
+    if(pos == 3 && keyPressed != NO_KEY &&( keyPressed == '1' || keyPressed == '2' || keyPressed == '3'
+                ||   keyPressed != '4' || keyPressed != '5' || keyPressed != '0'))
+    {
+      temp = keyPressed - 48;
+      timerM = temp * 10;
+      pos += 1;
+      lcd.print(keyPressed);
+      continue;
+    }
+    if(pos == 4 && keyPressed != NO_KEY && ( keyPressed != 'A' || keyPressed != 'B' || keyPressed != 'C'
+                ||   keyPressed != 'D' || keyPressed != '#' || keyPressed != '*'))
+    {
+      temp = keyPressed - 48;
+      timerM += temp;
+      pos += 1;
+      lcd.print(keyPressed);
+      lcd.print(':');
+      continue;
+    }
+    //SETTING TIMER SECONDS
+    if(pos == 5 && keyPressed != NO_KEY && ( keyPressed == '1' || keyPressed == '2' || keyPressed == '3'
+                ||   keyPressed != '4' || keyPressed != '5' || keyPressed != '0'))
+    {
+      temp = keyPressed - 48;
+      timerS = temp * 10;
+      pos += 1;
+      lcd.print(keyPressed);
+      continue; 
+    }
+    if(pos == 6 && keyPressed != NO_KEY && ( keyPressed != 'A' || keyPressed != 'B' || keyPressed != 'C'
+                ||   keyPressed != 'D' || keyPressed != '#' || keyPressed != '*'))
+    {
+      temp = keyPressed - 48;
+      timerS += temp;
+      pos += 1;
+      lcd.print(keyPressed);
+      break;
+    } 
+  }    
 }
 
 // - - - - - - - - - SET METHOD BLOCK - - - - - - - - - //
@@ -481,16 +606,17 @@ void loop()
     	break;
     
     case ALARM:
-    	Alarm();
+    	alarm();
     	NEXT_STATE = MENU;
     	break;
     
     case TIMER:
-    	TIMER();
+    	timer();
+    	alarm();
     	NEXT_STATE = MENU;
     	break;
   }
-  delay(1000);
+  delay(990);
   if( alarmSet == true )
   {
   	if ( checkAlarm() )
@@ -501,17 +627,4 @@ void loop()
   checkTime();
   STATE = NEXT_STATE;
     
-  /*
-  char keyPressed = keyPad.getKey();
-  if( keyPressed != NO_KEY )
-  {
-    Serial.println(keyPressed);
-  }
-  
-  digitalWrite(13, HIGH);
-  delay(1000); // Wait for 1000 millisecond(s)
-  digitalWrite(13, LOW);
-  delay(1000); // Wait for 1000 millisecond(s)
-  */
-  
 }
