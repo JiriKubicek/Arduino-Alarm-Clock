@@ -13,7 +13,7 @@
 const int buzzer = 12;
 
 enum states {
- SET_TIME_NEW, SET_DAY, MENU, SET_TIME, SET_ALARM, SET_TIMER  
+ SET_TIME_NEW, SET_DAY, MENU, SET_TIME, SET_ALARM, SET_TIMER, ALARM  
 };
 enum states STATE, NEXT_STATE;
 
@@ -97,28 +97,29 @@ void printDay()
   switch(d)
   {
   	case 1:
-    	lcd.print("MONDAY   ");
+    	lcd.print("MONDAY    ");
     	break;
     case 2:
-    	lcd.print("TUESDAY  ");
+    	lcd.print("TUESDAY   ");
     	break;
     case 3:
-    	lcd.print("WEDNESDAY");
+    	lcd.print("WEDNESDAY ");
     	break;
     case 4:
-    	lcd.print("THURSDAY ");
+    	lcd.print("THURSDAY  ");
     	break;
     case 5:
-    	lcd.print("FRIDAY   ");
+    	lcd.print("FRIDAY    ");
     	break;
     case 6:
-    	lcd.print("SATURDAY ");
+    	lcd.print("SATURDAY  ");
     	break;
     case 7:
-    	lcd.print("SUNDAY   ");
+    	lcd.print("SUNDAY    ");
     	break;
   }
 }
+
 // - - - - LCD DISPLAY BLOCK - - - - //
 
 // BEGINNING OF MARIO THEME taken from the link below: //
@@ -144,7 +145,7 @@ void playMelody()
 
 
 /*
-*	ceckTime function increments the values of time and day
+*	checkTime function increments the values of time and day
 *	it is repeatedly called with a delay after displaying a menu
 *	it checks if values are correct and don't go over 
 */
@@ -172,6 +173,50 @@ void checkTime()
   }
 }
 
+/* Check Alarm functions checks whether an alarm will be activated or not */
+bool checkAlarm()
+{
+  if( alarmH == h )
+  {
+    if( alarmM == m )
+    {
+      if( alarmS == s )
+      {
+       if( alarmD == d )
+       {
+    	 return true;
+       }
+      }
+    }
+  }
+  return false;
+}
+
+/* Alarm method plays tune and changes the display until confirmation	*/
+void Alarm()
+{
+  lcd.clear();
+  lcd.setCursor( 2, 0 );
+  lcd.print("WAKE UP!");
+  lcd.setCursor( 0, 1 );
+  lcd.print("PRESS ANY BUTTON");
+  
+  while( true )
+  {
+   keyPressed = keyPad.getKey();
+   if( keyPressed != NO_KEY )
+   {
+    alarmSet = false;
+    break; 
+   }
+   playMelody(); 
+   checkTime();
+   delay(1000);  
+  }
+  
+}
+
+// - - - - - - - - - SET METHOD BLOCK - - - - - - - - - //
 
 /*
 * 	setTime function sets a new time for the Alarm clock
@@ -371,8 +416,10 @@ void setAlarm()
 
 void setTimer()
 {
+  
 }
 
+// - - - - - - - - - SET METHOD BLOCK - - - - - - - - - //
 
 
 ////////////////////////////////////////////////////////////////
@@ -425,20 +472,31 @@ void loop()
     
     case SET_ALARM:
     	setAlarm();
+    	NEXT_STATE = MENU;
     	break;
     
     case SET_TIMER:
     	setTimer();
+    	NEXT_STATE = TIMER;
     	break;
     
     case ALARM:
-    	printAlarm();
+    	Alarm();
+    	NEXT_STATE = MENU;
+    	break;
+    
+    case TIMER:
+    	TIMER();
+    	NEXT_STATE = MENU;
     	break;
   }
   delay(1000);
   if( alarmSet == true )
   {
-  	checkAlarm();
+  	if ( checkAlarm() )
+    {
+     NEXT_STATE = ALARM; 
+    }
   }
   checkTime();
   STATE = NEXT_STATE;
