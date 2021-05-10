@@ -224,6 +224,9 @@ void alarm()
 /* Timer method counts down to 0 and prints current countdown to LCD*/
 void timer()
 {
+  lcd.clear();
+  lcd.setCursor(4, 0);
+  lcd.print("COUNTDOWN");
   while( true )
   {
     lcd.setCursor(4, 1);
@@ -282,7 +285,14 @@ void setTime( bool alarm )
 {
   lcd.clear();
   lcd.setCursor(4, 0);
-  lcd.print("SET TIME     ");
+  if( alarm == false )
+  {
+  	lcd.print("SET TIME     ");
+  }
+  else
+  {
+    lcd.print("SET ALARM    "); 
+  }
   lcd.setCursor(4, 1);
   
   int pos = 1;	//pos number shows current position on time scale
@@ -472,8 +482,8 @@ void setAlarm()
 void setTimer()
 {
   lcd.clear();
-  lcd.setCursor(3, 0);
-  lcd.print("SET TIMER    ");
+  lcd.setCursor(4, 0);
+  lcd.print("SET TIMER   ");
   lcd.setCursor(4, 1);
   
   int pos = 1;
